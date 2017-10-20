@@ -1,0 +1,266 @@
+<html>
+<head>
+<title> My Box Joint Jig </title>
+<meta name="viewport" content="width=device-width, height=device-height">
+<script language="javascript" type="text/javascript">
+
+var ipValue;
+var connection;
+var response;
+var workpiece=4000;
+var num=10;
+var gap=2;
+var blade=114;
+	var connected=false;
+
+/* Goto position and wait on confirmation of the cut*/
+function cut(pos){
+	var command= "go"+pos;
+	console.log('Sent: ', command);
+	connection.send(command);
+//	console.log('got: ', response);
+	alert("Cut now!");
+}
+
+/* Cut a notch at start position with a certain width and saw blade */
+
+function old_cutNotch(pos_start,width,kerf){
+	if (width == kerf){
+	cut(pos_start);
+	}
+	else {
+		rest= width % kerf;
+		console.log('rest: ', rest);
+//		advance = kerf - rest - Math.floor(rest*kerf/width) ;		
+		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;		
+		console.log('advance: ', advance);
+		pos_end = pos_start + width -kerf;
+	while ((pos_start+kerf) < (pos_end+advance))		 {
+			 cut(pos_start);
+			 //pos_end -= kerf;
+			 cut(pos_end)
+			 pos_end-= advance; 
+			 pos_start+= advance;
+			};
+	
+		cut(pos_start);
+	}
+}
+
+	
+	function cutNotch(pos_start,width,kerf){
+		if (width == kerf){
+		cut(pos_start);
+		}
+		else {
+			rest= width-2*kerf;
+			pos_end=pos_start+width-kerf;
+			cut(pos_start);
+			cut(pos_end);
+			while (rest>0){
+				console.log('rest: ', rest);
+				if (kerf/rest>1.1){
+					cut(pos_start+Math.ceil((width-kerf)/2));
+					break;
+				}
+				width=rest;
+				rest -= Math.ceil(1.8*kerf);
+				pos_start += Math.floor(0.9*kerf);
+				pos_end -= Math.floor(0.9*kerf);
+				cut(pos_start);
+				cut(pos_end);
+			}
+		}
+	}
+
+/* Cut odd fingers*/
+	function OddNotch() {
+		resetFn();
+		if (num!=0){
+			pitch = Math.ceil(workpiece / num);
+		} else
+		{pitch=blade-gap;
+		};
+		console.log("Pitch: ",pitch);
+		width = pitch + gap
+		start_pos = pitch - Math.floor(gap/2);
+		console.log("Notch: ",width);
+		console.log("Start : ",start_pos);
+		while (start_pos < workpiece){
+			cutNotch(start_pos,width,blade);
+			start_pos+=2*pitch;
+			if((start_pos+blade/4)>workpiece){
+				break;};
+			}
+		alert("Done cutting notches");
+		doneFn();
+	}
+	
+/* Cut even fingers*/
+	function EvenNotch() {
+		resetFn();
+		if (num!=0){
+			pitch = Math.ceil(workpiece / num);
+		} else
+		{pitch=blade-gap;
+		};
+		console.log("Pitch: ",pitch);
+		width = pitch + gap
+//		start_pos = pitch - Math.floor(gap/2);
+		start_pos = 0;
+		console.log("Notch: ",width);
+		console.log("Start : ",start_pos);
+		while (start_pos < workpiece){
+			cutNotch(start_pos,width,blade);
+			start_pos+=2*pitch- Math.floor(gap/2);
+			if((start_pos+blade/4)>workpiece){
+				break;};
+		}
+		alert("Done cutting notches");
+		doneFn();
+	}
+	
+	
+function doneFn() {
+	var toSend = "DONE";
+	connection.send(toSend); 
+};
+
+	function homeFn() {
+	var toSend = "Home";
+	connection.send(toSend); 
+};
+
+function resetFn() {
+	var toSend = "RESET";
+	connection.send(toSend); 
+};
+
+function reconnectFn() {
+	if(connected){connection.close()};
+	mod(); 
+};
+
+function mod(){
+var text = document.getElementById('ip').value;
+ipValue = text;	
+connection = new WebSocket(ipValue, ['arduino']); 
+
+connection.onmessage = function (event) {
+	response=event.data;
+	console.log('Server: ', response);
+//	console.log('Substring',response.substring(0,3));
+/*	if (response.substring(0,9)=='Position:') {
+	alert(response);
+	};*/
+	document.getElementById("konsole").innerHTML = response;
+//	document.getElementById("konsole").value = response;
+};	
+connection.onerror = function (error) {
+	console.log('WebSocket Error ', error);
+}
+
+connection.onopen = function () {
+	connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date()); 
+	connection.send('connected');
+	connected=true;
+};
+
+//console.log(text)
+console.log("IP value changed to:"+ipValue);
+}	
+function showValueR(newValue)
+                {
+                        document.getElementById("outputTextR").innerHTML=newValue;
+					   
+                        connection.send("x"+newValue);
+                        console.log('Client: ',"x"+newValue);
+                }	
+
+function goTo()
+                {
+                        var newValue=document.getElementById("position").value;
+					   
+                        connection.send("go"+newValue);
+                        console.log('Client: ',"go"+newValue);
+                }	
+
+	function updateParam()
+                {
+					num=document.getElementById("Fnum").value;
+					workpiece=Math.floor(document.getElementById("Wwidth").value*40);
+					console.log("workpiece: ",workpiece);
+					gap=Math.floor(document.getElementById("Ggap").value/25);
+					console.log("gap: ",gap);
+					blade=Math.floor(document.getElementById("Kwidth").value/25);
+					console.log("blade: ",blade);
+					if (Math.ceil(workpiece / num) < blade){
+						document.getElementById("konsole").innerHTML = "Sawblade is wider than finger pitch! \n Using Sawblade width as pitch.";
+						num=0;
+					} else {
+						document.getElementById("konsole").innerHTML = "updated parameter!";
+					};
+					console.log("num: ",num);
+					
+				}
+	
+					
+					
+
+
+</script>
+
+</head>
+<body style="height=100% width=100%" >
+<h1>Box Joint Jig</h1><p></p>
+<!-- <input type="button" onclick="homeFn()"> Reset Jig	<p><p></p> -->
+
+<button onclick="homeFn()">Reset Jig</button>
+<button onclick="resetFn()">Goto "0"</button>
+
+</br>
+<!--
+<table id="outside">
+    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.30:81" onchange="mod()"> </tr>
+    <button onclick="reconnectFn()">Reconnect  WS</button><p></p>
+</table>*/ -->
+
+    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.43.78:81" onchange="mod()">
+    <button onclick="reconnectFn()">Connect</button>
+</br>
+
+
+
+<!--<button onclick="cutNotch(400,400,blade)">Cut Notch</button><p></p>-->
+<p></p>
+<button onclick="OddNotch()">Odd Fingers</button>
+<button onclick="EvenNotch()">Even Fingers</button><p></p>
+
+<!--
+<table id="goPosition">
+	<input type="text"  placeholder="Input the new Postion" id="position" onchange="goTo()" > numbers 0..9900 </tr>
+	<button onclick="goTo()">Go to Position  WS</button><p></p>
+</table>-->
+
+<table id="Parameters">
+	<input type="number"  value=100 id="Wwidth" onchange="updateParam()"> Workpiece in mm </tr>
+	<input type="number"  value=10 id="Fnum" onchange="updateParam()"> Number of fingers </tr>
+	<input type="number"  value=50 id="Ggap" onchange="updateParam()"> Gap for glue in um </tr>
+	<input type="number"  value=2750 id="Kwidth"  onchange="updateParam()"> Kerfwidth in um </tr>
+</table>
+
+<button onclick="updateParam()">Update Parameter</button><p></p>
+
+
+<table id="konsole_p">
+     <output type="text"  id="konsole" value=""> </tr> 
+    
+</table>
+
+<br/>	
+
+Author: Wurmtal 868 </br>
+
+</body>
+</html> 
+

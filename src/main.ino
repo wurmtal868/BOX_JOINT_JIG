@@ -18,11 +18,16 @@ Adafruit_SSD1306 display(OLED_RESET); // Create an instance of the OLED display
 
 
 WebSocketsServer webSocket = WebSocketsServer(81);
+
+#include "credentials.h"
+
+// Add lines below into "credentials.h" with your WiFi credentials
+/*
 const char* ssid1     = "ssid1";
 const char* password1 = "*****";
-const char* ssid     = "ssid1";
+const char* ssid     = "ssid";
 const char* password = "*****";
-
+*/
 
 // Jig GPIOs on ESP8266
 

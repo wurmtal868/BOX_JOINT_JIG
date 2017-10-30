@@ -31,23 +31,23 @@ function old_cutNotch(pos_start,width,kerf){
 	else {
 		rest= width % kerf;
 		console.log('rest: ', rest);
-//		advance = kerf - rest - Math.floor(rest*kerf/width) ;		
-		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;		
+//		advance = kerf - rest - Math.floor(rest*kerf/width) ;
+		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;
 		console.log('advance: ', advance);
 		pos_end = pos_start + width -kerf;
 	while ((pos_start+kerf) < (pos_end+advance))		 {
 			 cut(pos_start);
 			 //pos_end -= kerf;
 			 cut(pos_end)
-			 pos_end-= advance; 
+			 pos_end-= advance;
 			 pos_start+= advance;
 			};
-	
+
 		cut(pos_start);
 	}
 }
 
-	
+
 	function cutNotch(pos_start,width,kerf){
 		if (width == kerf){
 		cut(pos_start);
@@ -95,7 +95,7 @@ function old_cutNotch(pos_start,width,kerf){
 		alert("Done cutting notches");
 		doneFn();
 	}
-	
+
 /* Cut even fingers*/
 	function EvenNotch() {
 		resetFn();
@@ -119,32 +119,32 @@ function old_cutNotch(pos_start,width,kerf){
 		alert("Done cutting notches");
 		doneFn();
 	}
-	
-	
+
+
 function doneFn() {
 	var toSend = "DONE";
-	connection.send(toSend); 
+	connection.send(toSend);
 };
 
 	function homeFn() {
-	var toSend = "Home";
-	connection.send(toSend); 
+	var toSend = "RESET";
+	connection.send(toSend);
 };
 
 function resetFn() {
-	var toSend = "RESET";
-	connection.send(toSend); 
+	var toSend = "Home";
+	connection.send(toSend);
 };
 
 function reconnectFn() {
 	if(connected){connection.close()};
-	mod(); 
+	mod();
 };
 
 function mod(){
 var text = document.getElementById('ip').value;
-ipValue = text;	
-connection = new WebSocket(ipValue, ['arduino']); 
+ipValue = text;
+connection = new WebSocket(ipValue, ['arduino']);
 
 connection.onmessage = function (event) {
 	response=event.data;
@@ -155,35 +155,35 @@ connection.onmessage = function (event) {
 	};*/
 	document.getElementById("konsole").innerHTML = response;
 //	document.getElementById("konsole").value = response;
-};	
+};
 connection.onerror = function (error) {
 	console.log('WebSocket Error ', error);
 }
 
 connection.onopen = function () {
-	connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date()); 
+	connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date());
 	connection.send('connected');
 	connected=true;
 };
 
 //console.log(text)
 console.log("IP value changed to:"+ipValue);
-}	
+}
 function showValueR(newValue)
                 {
                         document.getElementById("outputTextR").innerHTML=newValue;
-					   
+
                         connection.send("x"+newValue);
                         console.log('Client: ',"x"+newValue);
-                }	
+                }
 
 function goTo()
                 {
                         var newValue=document.getElementById("position").value;
-					   
+
                         connection.send("go"+newValue);
                         console.log('Client: ',"go"+newValue);
-                }	
+                }
 
 	function updateParam()
                 {
@@ -201,11 +201,11 @@ function goTo()
 						document.getElementById("konsole").innerHTML = "updated parameter!";
 					};
 					console.log("num: ",num);
-					
+
 				}
-	
-					
-					
+
+
+
 
 
 </script>
@@ -219,14 +219,14 @@ function goTo()
 <button onclick="resetFn()">Goto "0"</button>
 
 </br>
-<!--
-<table id="outside">
-    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.30:81" onchange="mod()"> </tr>
-    <button onclick="reconnectFn()">Reconnect  WS</button><p></p>
-</table>*/ -->
 
+<table id="outside">
+    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.31:81" onchange="mod()"> </tr>
+    <button onclick="reconnectFn()">Reconnect  WS</button><p></p>
+</table>
+<!--
     <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.43.78:81" onchange="mod()">
-    <button onclick="reconnectFn()">Connect</button>
+    <button onclick="reconnectFn()">Connect</button> -->
 </br>
 
 
@@ -253,14 +253,13 @@ function goTo()
 
 
 <table id="konsole_p">
-     <output type="text"  id="konsole" value=""> </tr> 
-    
+     <output type="text"  id="konsole" value=""> </tr>
+
 </table>
 
-<br/>	
+<br/>
 
 Author: Wurmtal 868 </br>
 
 </body>
-</html> 
-
+</html>

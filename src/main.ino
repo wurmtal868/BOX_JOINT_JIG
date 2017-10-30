@@ -86,6 +86,9 @@ void display_text(String line1,String line2){
 
 void counter_reset()
 {
+  pinMode(FWD_PIN, OUTPUT);
+  digitalWrite(FWD_PIN,LOW);      // set FWD_PIN LOW to debounce the "HOME" microswtich
+  detachInterrupt(FWD_PIN);
   counter=0;
   attachInterrupt(sensor_clk, falling_edge, FALLING);
 }
@@ -164,8 +167,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
 
             String text = String((char *) &payload[0]);
             display_status(text);
-          if(text=="Home"){
-            goHome();
+          if(text=="RESET"){
+            resetJig();
             String actual = "Position:" + String(counter);
             char C_actual[16];
             actual.toCharArray(C_actual,16);
@@ -190,7 +193,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
             display_text("","Cut!");
            }
 
-           if(text=="RESET"){
+           if(text=="Home"){
             gopos(-100);
             gopos(0);
             }
@@ -225,7 +228,7 @@ void gopos(int pos)
   display_text("WAIT!","");
   if (pos==-200){
     if (!HOME and (counter!=0)) {
-      goHome();
+      resetJig();
     }
   }
   else {
@@ -282,23 +285,26 @@ void gopos(int pos)
 
 }   // end gopos()
 
-void goHome()
+void resetJig()
 {
   HOME=false;
   display_text("WAIT!","");
+  attachInterrupt(sensor_clk, falling_edge, FALLING);
+  gopos(500);
   attachInterrupt(FWD_PIN,counter_reset, FALLING);
   pinMode(BACK_PIN, OUTPUT);
   digitalWrite(BACK_PIN,LOW);
   while (digitalRead(FWD_PIN) == HIGH) {
   delay(100);
   }
-  detachInterrupt(FWD_PIN);
+  pinMode(FWD_PIN, INPUT);
+  // detachInterrupt(FWD_PIN);
   digitalWrite(BACK_PIN,HIGH);
   pinMode(BACK_PIN, INPUT);
 
-  while (digitalRead(FWD_PIN) == LOW) {
-  delay (200);  //warte
-
+  while (digitalRead(FWD_PIN) == LOW)
+  {
+    delay (200);  //warte
   }
 
   //counter=0;
@@ -372,7 +378,7 @@ void setup()
   Serial.println(" ");
   Serial.println("Fahre Schlitten zurück. Bitte Warten!");
   //counter=0;
-  goHome();
+  resetJig();
   //gopos(50);
   Serial.print("c:");
   Serial.println(counter);

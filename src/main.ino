@@ -191,6 +191,15 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
             actual.toCharArray(C_actual,16);
             webSocket.sendTXT(num, C_actual);
             display_text("","Cut!");
+            display_status("Push Blue when done!");
+            while(digitalRead(blueKey)==HIGH)
+            {
+              delay(100);
+            }
+            while(digitalRead(blueKey)==LOW)
+            {
+              delay(500);
+            }
            }
 
            if(text=="Home"){
@@ -394,7 +403,9 @@ void loop() {
       warte ++;
     }
     else{
-    display_counter(String (counter));
+      display_counter(String (counter));
+      // display_counter(String (counter)+" = "+String(counter/4)+"mm/10");
+      // display_counter(String(counter/4)+"mm/10");
      warte=0;
     }
     if (digitalRead(redKey)==HIGH) display_counter("Red Button pushed");

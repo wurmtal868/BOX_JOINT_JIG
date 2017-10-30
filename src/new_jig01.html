@@ -1,6 +1,6 @@
 <html>
 <head>
-<title> My Box Joint Jig </title>
+<title> My Box Joint Jig</title>
 <meta name="viewport" content="width=device-width, height=device-height">
 <script language="javascript" type="text/javascript">
 
@@ -11,7 +11,7 @@ var workpiece=4000;
 var num=10;
 var gap=2;
 var blade=114;
-	var connected=false;
+var connected=false;
 
 /* Goto position and wait on confirmation of the cut*/
 function cut(pos){
@@ -19,34 +19,51 @@ function cut(pos){
 	console.log('Sent: ', command);
 	connection.send(command);
 //	console.log('got: ', response);
-	alert("Cut now!");
+	//cut_message(command);
+	// alert("Cut now!");
 }
+
+
+// function cut_message(command)
+// {
+// 	//var response="";
+// 	while(command != response)
+// 	{
+// 		connection.onmessage = function (event)
+// 		{
+// 			response=event.data;
+// 			console.log('Server replies: ', response);
+// 			document.getElementById("konsole").innerHTML = response;
+// 		}
+// 	}
+// }
+//
 
 /* Cut a notch at start position with a certain width and saw blade */
-
-function old_cutNotch(pos_start,width,kerf){
-	if (width == kerf){
-	cut(pos_start);
-	}
-	else {
-		rest= width % kerf;
-		console.log('rest: ', rest);
-//		advance = kerf - rest - Math.floor(rest*kerf/width) ;
-		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;
-		console.log('advance: ', advance);
-		pos_end = pos_start + width -kerf;
-	while ((pos_start+kerf) < (pos_end+advance))		 {
-			 cut(pos_start);
-			 //pos_end -= kerf;
-			 cut(pos_end)
-			 pos_end-= advance;
-			 pos_start+= advance;
-			};
-
-		cut(pos_start);
-	}
-}
-
+//
+// function old_cutNotch(pos_start,width,kerf){
+// 	if (width == kerf){
+// 	cut(pos_start);
+// 	}
+// 	else {
+// 		rest= width % kerf;
+// 		console.log('rest: ', rest);
+// //		advance = kerf - rest - Math.floor(rest*kerf/width) ;
+// 		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;
+// 		console.log('advance: ', advance);
+// 		pos_end = pos_start + width -kerf;
+// 	while ((pos_start+kerf) < (pos_end+advance))		 {
+// 			 cut(pos_start);
+// 			 //pos_end -= kerf;
+// 			 cut(pos_end)
+// 			 pos_end-= advance;
+// 			 pos_start+= advance;
+// 			};
+//
+// 		cut(pos_start);
+// 	}
+// }
+//
 
 	function cutNotch(pos_start,width,kerf){
 		if (width == kerf){
@@ -92,7 +109,7 @@ function old_cutNotch(pos_start,width,kerf){
 			if((start_pos+blade/4)>workpiece){
 				break;};
 			}
-		alert("Done cutting notches");
+		// alert("Done cutting notches");
 		doneFn();
 	}
 
@@ -116,7 +133,7 @@ function old_cutNotch(pos_start,width,kerf){
 			if((start_pos+blade/4)>workpiece){
 				break;};
 		}
-		alert("Done cutting notches");
+		// alert("Done cutting notches");
 		doneFn();
 	}
 
@@ -126,9 +143,10 @@ function doneFn() {
 	connection.send(toSend);
 };
 
-	function homeFn() {
+function homeFn() {
 	var toSend = "RESET";
 	connection.send(toSend);
+	// reply();
 };
 
 function resetFn() {
@@ -141,50 +159,63 @@ function reconnectFn() {
 	mod();
 };
 
-function mod(){
-var text = document.getElementById('ip').value;
-ipValue = text;
-connection = new WebSocket(ipValue, ['arduino']);
+function mod()
+{
+	var text = document.getElementById('ip').value;
+	ipValue = text;
+	connection = new WebSocket(ipValue, ['arduino']);
+	//reply();
 
-connection.onmessage = function (event) {
-	response=event.data;
-	console.log('Server: ', response);
-//	console.log('Substring',response.substring(0,3));
-/*	if (response.substring(0,9)=='Position:') {
-	alert(response);
-	};*/
-	document.getElementById("konsole").innerHTML = response;
-//	document.getElementById("konsole").value = response;
-};
-connection.onerror = function (error) {
-	console.log('WebSocket Error ', error);
+	connection.onmessage = function (event)
+	{
+		response=event.data;
+		console.log('Server: ', response);
+		document.getElementById("konsole").innerHTML = response;
+	}
+
+	connection.onerror = function (error)
+	{
+		console.log('WebSocket Error ', error);
+	}
+
+	connection.onopen = function ()
+	{
+		connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date());
+		connection.send('connected');
+		connected=true;
+	}
+	console.log("IP value changed to:"+ipValue);
+	// reply()
 }
 
-connection.onopen = function () {
-	connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date());
-	connection.send('connected');
-	connected=true;
-};
+// function reply()
+// {
+// 	connection.onmessage = function (event)
+// 	{
+// 		response=event.data;
+// 		console.log('Server replies: ', response);
+// 		document.getElementById("konsole").innerHTML = response;
+// 	};
+// }
+
 
 //console.log(text)
-console.log("IP value changed to:"+ipValue);
-}
-function showValueR(newValue)
-                {
-                        document.getElementById("outputTextR").innerHTML=newValue;
-
-                        connection.send("x"+newValue);
-                        console.log('Client: ',"x"+newValue);
-                }
-
-function goTo()
-                {
-                        var newValue=document.getElementById("position").value;
-
-                        connection.send("go"+newValue);
-                        console.log('Client: ',"go"+newValue);
-                }
-
+// function showValueR(newValue)
+//                 {
+//                         document.getElementById("outputTextR").innerHTML=newValue;
+//
+//                         connection.send("x"+newValue);
+//                         console.log('Client: ',"x"+newValue);
+//                 }
+//
+// function goTo()
+//                 {
+//                         var newValue=document.getElementById("position").value;
+//
+//                         connection.send("go"+newValue);
+//                         console.log('Client: ',"go"+newValue);
+//                 }
+//
 	function updateParam()
                 {
 					num=document.getElementById("Fnum").value;
@@ -220,13 +251,13 @@ function goTo()
 
 </br>
 
-<table id="outside">
+<!-- <table id="outside">
     <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.31:81" onchange="mod()"> </tr>
     <button onclick="reconnectFn()">Reconnect  WS</button><p></p>
-</table>
-<!--
-    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.43.78:81" onchange="mod()">
-    <button onclick="reconnectFn()">Connect</button> -->
+</table> -->
+
+    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.31:81" onchange="mod()">
+    <button onclick="reconnectFn()">Connect</button>
 </br>
 
 

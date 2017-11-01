@@ -14,128 +14,105 @@ var blade=114;
 var connected=false;
 
 /* Goto position and wait on confirmation of the cut*/
-function cut(pos){
+function cut(pos)
+{
 	var command= "go"+pos;
 	console.log('Sent: ', command);
 	connection.send(command);
-//	console.log('got: ', response);
-	//cut_message(command);
-	// alert("Cut now!");
 }
 
+/*
+cutNotch calculates the cutting positions based on the required notchwidth and the Sawblade kerf
+*/
 
-// function cut_message(command)
-// {
-// 	//var response="";
-// 	while(command != response)
-// 	{
-// 		connection.onmessage = function (event)
-// 		{
-// 			response=event.data;
-// 			console.log('Server replies: ', response);
-// 			document.getElementById("konsole").innerHTML = response;
-// 		}
-// 	}
-// }
-//
-
-/* Cut a notch at start position with a certain width and saw blade */
-//
-// function old_cutNotch(pos_start,width,kerf){
-// 	if (width == kerf){
-// 	cut(pos_start);
-// 	}
-// 	else {
-// 		rest= width % kerf;
-// 		console.log('rest: ', rest);
-// //		advance = kerf - rest - Math.floor(rest*kerf/width) ;
-// 		advance =kerf - Math.floor(kerf/Math.ceil(width/kerf)) ;
-// 		console.log('advance: ', advance);
-// 		pos_end = pos_start + width -kerf;
-// 	while ((pos_start+kerf) < (pos_end+advance))		 {
-// 			 cut(pos_start);
-// 			 //pos_end -= kerf;
-// 			 cut(pos_end)
-// 			 pos_end-= advance;
-// 			 pos_start+= advance;
-// 			};
-//
-// 		cut(pos_start);
-// 	}
-// }
-//
-
-	function cutNotch(pos_start,width,kerf){
-		if (width == kerf){
+function cutNotch(pos_start,width,kerf)
+{
+	if (width == kerf)
+	{
 		cut(pos_start);
-		}
-		else {
-			rest= width-2*kerf;
-			pos_end=pos_start+width-kerf;
+	}
+	else 	// Notch is wider than the kerf of the blade
+	{
+		rest= width-2*kerf;				// calculate the rest after making two cuts
+		pos_end=pos_start+width-kerf;  // calculate the position of the second cut
+		cut(pos_start);
+		cut(pos_end);
+		while (rest>0)
+		{
+			console.log('rest: ', rest);
+			if (kerf/rest>1.1)
+			{
+				cut(pos_start+Math.ceil((width-kerf)/2));
+				break;
+			}
+			width=rest;
+			rest -= Math.ceil(1.8*kerf);
+			pos_start += Math.floor(0.9*kerf);
+			pos_end -= Math.floor(0.9*kerf);
 			cut(pos_start);
 			cut(pos_end);
-			while (rest>0){
-				console.log('rest: ', rest);
-				if (kerf/rest>1.1){
-					cut(pos_start+Math.ceil((width-kerf)/2));
-					break;
-				}
-				width=rest;
-				rest -= Math.ceil(1.8*kerf);
-				pos_start += Math.floor(0.9*kerf);
-				pos_end -= Math.floor(0.9*kerf);
-				cut(pos_start);
-				cut(pos_end);
-			}
 		}
 	}
+}
 
-/* Cut odd fingers*/
-	function OddNotch() {
-		resetFn();
-		if (num!=0){
-			pitch = Math.ceil(workpiece / num);
-		} else
-		{pitch=blade-gap;
+/* OddNotch:
+ calculates the positions of the notches required to get a workpiece with a finger at postion "zero".
+
+*/
+function OddNotch() {
+	resetFn();
+	if (num!=0){
+		pitch = Math.ceil(workpiece / num);
+	} else
+	{
+		pitch=blade-gap;
+	};
+	console.log("Pitch: ",pitch);
+	width = pitch + gap
+	start_pos = pitch - Math.floor(gap/2);
+	console.log("Notch: ",width);
+	console.log("Start : ",start_pos);
+	while (start_pos < workpiece)
+	{
+		cutNotch(start_pos,width,blade);
+		start_pos+=2*pitch;
+		if((start_pos+blade/4)>workpiece)
+		{
+			break;
 		};
-		console.log("Pitch: ",pitch);
-		width = pitch + gap
-		start_pos = pitch - Math.floor(gap/2);
-		console.log("Notch: ",width);
-		console.log("Start : ",start_pos);
-		while (start_pos < workpiece){
-			cutNotch(start_pos,width,blade);
-			start_pos+=2*pitch;
-			if((start_pos+blade/4)>workpiece){
-				break;};
-			}
-		// alert("Done cutting notches");
-		doneFn();
 	}
+	// send "done" to the jig
+	doneFn();
+}
 
 /* Cut even fingers*/
-	function EvenNotch() {
-		resetFn();
-		if (num!=0){
-			pitch = Math.ceil(workpiece / num);
-		} else
-		{pitch=blade-gap;
-		};
-		console.log("Pitch: ",pitch);
-		width = pitch + gap
+function EvenNotch()
+{
+	resetFn();
+	if (num!=0)
+	{
+		pitch = Math.ceil(workpiece / num);
+	} else
+	{
+		pitch=blade-gap;
+	};
+	console.log("Pitch: ",pitch);
+	width = pitch + gap
 //		start_pos = pitch - Math.floor(gap/2);
-		start_pos = 0;
-		console.log("Notch: ",width);
-		console.log("Start : ",start_pos);
-		while (start_pos < workpiece){
-			cutNotch(start_pos,width,blade);
-			start_pos+=2*pitch- Math.floor(gap/2);
-			if((start_pos+blade/4)>workpiece){
-				break;};
-		}
-		// alert("Done cutting notches");
-		doneFn();
+	start_pos = 0;
+	console.log("Notch: ",width);
+	console.log("Start : ",start_pos);
+	while (start_pos < workpiece){
+		cutNotch(start_pos,width,blade);
+		start_pos+=2*pitch- Math.floor(gap/2);
+		if((start_pos+blade/4)>workpiece)
+		{
+			break;
+		};
 	}
+	// alert("Done cutting notches");
+	doneFn();
+}
 
 
 function doneFn() {
@@ -208,14 +185,15 @@ function mod()
 //                         console.log('Client: ',"x"+newValue);
 //                 }
 //
-// function goTo()
-//                 {
-//                         var newValue=document.getElementById("position").value;
-//
-//                         connection.send("go"+newValue);
-//                         console.log('Client: ',"go"+newValue);
-//                 }
-//
+function goTo()
+                {
+                        var newValue=document.getElementById("position").value;
+
+                        connection.send("go"+newValue);
+                        console.log('Client: ',"go"+newValue);
+												doneFn();
+                }
+
 	function updateParam()
                 {
 					num=document.getElementById("Fnum").value;
@@ -267,12 +245,12 @@ function mod()
 <button onclick="OddNotch()">Odd Fingers</button>
 <button onclick="EvenNotch()">Even Fingers</button><p></p>
 
-<!--
-<table id="goPosition">
-	<input type="text"  placeholder="Input the new Postion" id="position" onchange="goTo()" > numbers 0..9900 </tr>
-	<button onclick="goTo()">Go to Position  WS</button><p></p>
-</table>-->
 
+<!-- <table id="goPosition">
+	<input type="text"  placeholder="Input the new Postion" id="position" onchange="goTo()" > numbers 0..9900 </tr>
+	<button onclick="goTo()">Go to Position</button><p></p>
+</table>
+ -->
 <table id="Parameters">
 	<input type="number"  value=100 id="Wwidth" onchange="updateParam()"> Workpiece in mm </tr>
 	<input type="number"  value=10 id="Fnum" onchange="updateParam()"> Number of fingers </tr>

@@ -184,6 +184,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
             // if ( abs(pos-counter)<=10 and !HOME){
             //   gopos(pos-25);
             // }
+            webSocket.sendTXT(num, payload, lenght);
             gopos(pos);
             //delay(200);
             String actual = "Position:" + String(counter);
@@ -194,17 +195,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
             display_status("Push Blue when done!");
             while(digitalRead(blueKey)==HIGH)
             {
-              delay(100);
+              delay(500);
             }
             while(digitalRead(blueKey)==LOW)
             {
-              delay(500);
+              delay(300);
             }
+            break;
            }
 
            if(text=="Home"){
             gopos(-100);
             gopos(0);
+            display_text("Waiting","for Setup!");
             }
 
            if(text=="DONE"){
@@ -359,7 +362,7 @@ void setup()
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(100);
-        if(counter==200) {break;} ;
+        if(counter==50) {break;} ;
         counter +=1;
     }
     if (WiFi.status() != WL_CONNECTED) {

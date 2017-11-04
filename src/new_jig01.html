@@ -19,6 +19,7 @@ function cut(pos)
 	var command= "go"+pos;
 	console.log('Sent: ', command);
 	connection.send(command);
+	// alert("Cut!");
 }
 
 /*
@@ -60,7 +61,7 @@ function cutNotch(pos_start,width,kerf)
 
 */
 function OddNotch() {
-	resetFn();
+	// resetFn();
 	if (num!=0){
 		pitch = Math.ceil(workpiece / num);
 	} else
@@ -88,7 +89,7 @@ function OddNotch() {
 /* Cut even fingers*/
 function EvenNotch()
 {
-	resetFn();
+	// resetFn();
 	if (num!=0)
 	{
 		pitch = Math.ceil(workpiece / num);
@@ -118,17 +119,19 @@ function EvenNotch()
 function doneFn() {
 	var toSend = "DONE";
 	connection.send(toSend);
+	// connection.send('END');
 };
 
 function homeFn() {
 	var toSend = "RESET";
 	connection.send(toSend);
-	// reply();
+	// connection.send('END');
 };
 
 function resetFn() {
 	var toSend = "Home";
 	connection.send(toSend);
+	// connection.send("END");
 };
 
 function reconnectFn() {
@@ -159,6 +162,7 @@ function mod()
 	{
 		connection.send('Message from Browser to ESP8266 yay its Working!! ' + new Date());
 		connection.send('connected');
+		// connection.send('END');
 		connected=true;
 	}
 	console.log("IP value changed to:"+ipValue);
@@ -234,7 +238,7 @@ function goTo()
     <button onclick="reconnectFn()">Reconnect  WS</button><p></p>
 </table> -->
 
-    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.2.31:81" onchange="mod()">
+    <input type="text"  placeholder="Input the IP of your Websocket server" id="ip" value="ws://192.168.4.1:81" onchange="mod()">
     <button onclick="reconnectFn()">Connect</button>
 </br>
 

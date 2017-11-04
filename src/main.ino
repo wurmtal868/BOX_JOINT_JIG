@@ -20,16 +20,6 @@ Adafruit_SSD1306 display(OLED_RESET); // Create an instance of the OLED display
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-// #include "credentials.h"
-
-// Add lines below into "credentials.h" with your WiFi credentials
-/*
-const char* ssid1     = "ssid1";
-const char* password1 = "*****";
-const char* ssid     = "ssid";
-const char* password = "*****";
-*/
-
 // Jig GPIOs on ESP8266
 
 #define OLED_SDA 12
@@ -88,11 +78,11 @@ void display_text(String line1,String line2){
   lastLine2=line2;
 }
 
-
+/*
+Interrupt routine to detect the HOME button of the Jig and reset the counter
+*/
 void counter_reset()
 {
-  // pinMode(FWD_PIN, OUTPUT);
-  // digitalWrite(FWD_PIN,LOW);      // set FWD_PIN LOW to debounce the "HOME" microswtich
   detachInterrupt(FWD_PIN);
   counter=0;
   attachInterrupt(sensor_clk, falling_edge, FALLING);
@@ -108,7 +98,7 @@ void display_counter(String statusMSG){
 
 
 // Conuter Interupt Routines
-// There are routines for falling and rising edge to avoid any error if clock sensor is bouncing while the dirction sensor is stable
+// There are routines for falling and rising edge to avoid any error if clock sensor is bouncing while the direction sensor is stable
 
 void falling_edge()
 {
@@ -147,7 +137,7 @@ void rising_edge()
 }
 
 /*
-Reset Cut list when Red Button is pushed for longer then 1 second
+Reset Cut list
 */
 
 void resetCutList()
@@ -185,8 +175,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
 
 
             task = String((char *) &payload[0]);
-            // taskList.addText(task);
-            // display_status(task);
             webSocket.sendTXT(num, payload, lenght);
             break;
 
@@ -228,7 +216,6 @@ void actOnTask(String text)
   if(text=="DONE")
   {
     display_status("CutList complete");
-    // attachInterrupt(blueKey,resetCutList,RISING);
 
     display_text("Push Blue", "To Start!");
     waitForBlueButton();
@@ -250,7 +237,6 @@ void actOnTask(String text)
         waitForJigEnable();
        /* code */
       }
-    // detachInterrupt(blueKey);
     display_text("Done","Cutting");
     display_status("");
     delay(1000);
@@ -273,7 +259,6 @@ void gopos(int pos)
   {
     pinMode(BACK_PIN, OUTPUT);
     digitalWrite(BACK_PIN,LOW);
-    // analogWrite(JigEnable,1023);
 
     while (pos < (counter-300))
     {
@@ -325,7 +310,6 @@ void gopos(int pos)
     pinMode(FWD_PIN, INPUT);
   }
   analogWrite(JigEnable,1023);
-  // pinMode(JigEnable,INPUT);
   delay (300);
   display_counter(String(counter));
 
@@ -518,13 +502,6 @@ void loop()
       // display_counter(String(counter/4)+"mm/10");
      warte=0;
     }
-    // if (task!="")
-    // {
-    //   actOnTask(task);
-    //   task="";
-    //   // delay(500);
-    //   // display_status(task);
-    // }
     if (task!="")
     {
       actOnTask(task);

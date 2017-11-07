@@ -12,7 +12,7 @@
 
 #include <Adafruit_SSD1306.h>
 
-#define OLED_RESET 2 // Define dummy reset for the OLED display, use JigEnable because it will only disable the motor
+#define OLED_RESET 5 // Define dummy reset for the OLED display, use JigEnable because it will only disable the motor
 Adafruit_SSD1306 display(OLED_RESET); // Create an instance of the OLED display
 
 // #define DEBUG
@@ -43,7 +43,7 @@ volatile int counter = 0;
 String task="";
 
 
-FIFO taskList;
+FIFO cutList;
 
 /*
 Show a line of text (t_new) on postion t_x,t_y with textsize t_size on the OLED display
@@ -76,6 +76,18 @@ void display_text(String line1,String line2){
   display_line(2,0,16,lastLine2,line2);
   lastLine1=line1;
   lastLine2=line2;
+}
+
+void display_logo()
+{
+display_line(2,6,0,"","Box-Joints");
+display_line(2,24,20,"","Wurmtal");
+display_line(1,0,36,"","by");
+display_line(2,48,36,"","868");
+delay(2000);
+// waitForBlueButton();
+// display_line(2,0,16,"Wurmtal","");
+// display_line(2,0,32,"  868","");
 }
 
 /*
@@ -142,9 +154,9 @@ Reset Cut list
 
 void resetCutList()
 {
-    while (taskList.isNotEmpty())
+    while (cutList.isNotEmpty())
     {
-      taskList.getText();
+      cutList.getText();
     }
     display_text("Reset", "Cut List") ;
 }
@@ -168,14 +180,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
                 Serial.println(num);
                 Serial.print("Remote IP:");
                 Serial.println(ip);
-
+                webSocket.sendTXT(num,"connected");
             }
             break;
         case WStype_TEXT:
 
 
             task = String((char *) &payload[0]);
-            webSocket.sendTXT(num, payload, lenght);
+            //webSocket.sendTXT(num, payload, lenght);
             break;
 
         case WStype_BIN:
@@ -183,7 +195,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
             hexdump(payload, lenght);
 
             // echo data back to browser
-            webSocket.sendBIN(num, payload, lenght);
+            // webSocket.sendBIN(num, payload, lenght);
             break;
     }
 
@@ -201,7 +213,7 @@ void actOnTask(String text)
 
   if(text.startsWith("go"))
   {
-    taskList.addText(text);
+    cutList.addText(text);
   }
 
   if(text=="Home")
@@ -209,22 +221,23 @@ void actOnTask(String text)
     gopos(-100);
     delay(100);
     gopos(0);
-    display_status("HOME done!");
+    display_status("Moved to HOME!");
+    webSocket.broadcastTXT("Moved to HOME!");
     // display_text("Waiting","for Setup!");
   }
 
   if(text=="DONE")
   {
     display_status("CutList complete");
-
+    webSocket.broadcastTXT("Cutlist received!");
     display_text("Push Blue", "To Start!");
     waitForBlueButton();
     if (counter !=0)
       gopos(-100);
       gopos(0);
-    while (taskList.isNotEmpty())
+    while (cutList.isNotEmpty())
       {
-        text = taskList.getText();
+        text = cutList.getText();
         display_status(text);
         String goVal=(text.substring(text.indexOf("g")+2,text.length()));
         int pos = goVal.toInt();
@@ -235,9 +248,12 @@ void actOnTask(String text)
         display_text("","Cut!");
         Serial.println("Cut now!");
         waitForJigEnable();
+        webSocket.broadcastTXT(("Cut: "+goVal));
+        delay(200);
        /* code */
       }
     display_text("Done","Cutting");
+    webSocket.broadcastTXT("Done cutting, wait for setup!");
     display_status("");
     delay(1000);
   }
@@ -446,7 +462,8 @@ void setup()
 
   Wire.begin(OLED_SDA,OLED_SCL); // Set I2C pins for OLED display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-  // display.display();
+  display.clearDisplay();
+  display_logo();
   //
   // init done
 
@@ -454,7 +471,6 @@ void setup()
   display.clearDisplay();
   display.display();
 
-  display_text("Box-Joints","v 0.1");
 //Setup PWM
 
     analogWrite(JigEnable,1023);
@@ -492,14 +508,15 @@ pinMode(sensor_clk, INPUT);
 void loop()
 {
     webSocket.loop();
-    if (warte!=5000){
+    if (warte!=1000){
       warte ++;
     }
     else{
-      display_counter(String (counter));
+      // display_counter(String (counter));
       display_text("Waiting","for Setup!");
       // display_counter(String (counter)+" = "+String(counter/4)+"mm/10");
       // display_counter(String(counter/4)+"mm/10");
+      display_counter(String(counter/40)+"."+(counter/4%10)+"mm");
      warte=0;
     }
     if (task!="")
@@ -508,15 +525,15 @@ void loop()
       task="";
     }
 
-    yield();
+    // yield();
     if (digitalRead(redKey)==HIGH)
     {
-      display_counter("Red Button pushed");
+      // display_counter("Red Button pushed");
     }
-    yield();
+    // yield();
     pinMode(JigEnable,INPUT);
-    if (digitalRead(blueKey)==LOW) display_counter("Blue Button pushed");
-    if (digitalRead(FWD_PIN)==LOW) display_counter("HOME Button pushed");
-    if (digitalRead(BACK_PIN)==LOW) display_counter("END Button pushed");
+    // if (digitalRead(blueKey)==LOW) display_counter("Blue Button pushed");
+    // if (digitalRead(FWD_PIN)==LOW) display_counter("HOME Button pushed");
+    // if (digitalRead(BACK_PIN)==LOW) display_counter("END Button pushed");
     if (digitalRead(JigEnable)==LOW) display_text("Move Jig","Back!");
   }
